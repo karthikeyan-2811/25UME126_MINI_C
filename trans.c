@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #define MAX_ACCOUNTS 100
 #define FILE_NAME "credit_deep.dat"
@@ -41,6 +42,17 @@ void clearInputBuffer(void) {
 void clearScreen(void) {
     // Attempt to clear screen for cleaner UI
     system("cls || clear");
+}
+
+void logTransaction(const char* action, unsigned int acctNum, double amount) {
+    FILE *logPtr = fopen("transactions.log", "a");
+    if (logPtr != NULL) {
+        time_t now = time(NULL);
+        char *date = ctime(&now);
+        date[strlen(date)-1] = '\0'; // remove newline
+        fprintf(logPtr, "[%s] Action: %-15s | Acct: %-6u | Amount: %10.2f\n", date, action, acctNum, amount);
+        fclose(logPtr);
+    }
 }
 
 int isValidName(const char* name) {
@@ -228,6 +240,8 @@ void updateRecord(FILE *fPtr) {
         
         fseek(fPtr, - (long) sizeof(ClientData), SEEK_CUR);
         fwrite(&client, sizeof(ClientData), 1, fPtr);
+        
+        logTransaction(transaction >= 0 ? "Deposit" : "Withdrawal", client.acctNum, transaction);
     }
 }
 
@@ -256,6 +270,8 @@ void deleteRecord(FILE *fPtr) {
         fseek(fPtr, - (long) sizeof(ClientData), SEEK_CUR);
         fwrite(&blankClient, sizeof(ClientData), 1, fPtr);
         printf("Account %u successfully deleted.\n", accountNum);
+        
+        logTransaction("Account Deleted", accountNum, 0.0);
     }
 }
 
@@ -317,6 +333,8 @@ void newRecord(FILE *fPtr) {
     fseek(fPtr, - (long) sizeof(ClientData), SEEK_CUR);
     fwrite(&client, sizeof(ClientData), 1, fPtr);
     printf("Success: Account %u created.\n", accountNum);
+    
+    logTransaction("Account Created", accountNum, client.balance);
 }
 
 void listAllRecords(FILE *fPtr) {
