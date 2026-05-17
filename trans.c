@@ -19,6 +19,7 @@ typedef enum {
     MENU_LIST,
     MENU_SEARCH,
     MENU_SORT,
+    MENU_TRANSFER,
     MENU_EXIT
 } MenuOption;
 
@@ -115,6 +116,7 @@ void deleteRecord(FILE *fPtr);
 void listAllRecords(FILE *fPtr);
 void searchAccount(FILE *fPtr);
 void sortAndDisplay(FILE *fPtr);
+void transferBalance(FILE *fPtr);
 
 // --- MAIN ---
 int main(int argc, char *argv[])
@@ -153,6 +155,7 @@ int main(int argc, char *argv[])
             case MENU_LIST: listAllRecords(cfPtr); break;
             case MENU_SEARCH: searchAccount(cfPtr); break;
             case MENU_SORT: sortAndDisplay(cfPtr); break;
+            case MENU_TRANSFER: transferBalance(cfPtr); break;
             default: fprintf(stderr, "Incorrect choice. Please try again.\n"); break;
         }
     }
@@ -176,7 +179,8 @@ MenuOption enterChoice(void) {
     printf("5 - List All Active Accounts\n");
     printf("6 - Search Account by Last Name\n");
     printf("7 - Sort and Display by Balance\n");
-    printf("8 - End Program\n");
+    printf("8 - Transfer Balance\n");
+    printf("9 - End Program\n");
     printf("==================================\n");
     printf("Enter choice: ");
 
@@ -435,4 +439,54 @@ void sortAndDisplay(FILE *fPtr) {
 
     // Free dynamic memory to prevent memory leaks
     free(activeClients);
+}
+
+void transferBalance(FILE *fPtr) {
+    unsigned int srcAcct, destAcct;
+    double amount;
+    ClientData srcClient = {0, "", "", 0.0, "", ""};
+    ClientData destClient = {0, "", "", 0.0, "", ""};
+
+    printf("Enter Source Account (1 - %d): ", MAX_ACCOUNTS);
+    if (scanf("%u", &srcAcct) != 1 || srcAcct < 1 || srcAcct > MAX_ACCOUNTS) {
+        fprintf(stderr, "Invalid source account.\n"); clearInputBuffer(); return;
+    }
+    fseek(fPtr, (srcAcct - 1) * sizeof(ClientData), SEEK_SET);
+    fread(&srcClient, sizeof(ClientData), 1, fPtr);
+    if (srcClient.acctNum == 0) {
+        fprintf(stderr, "Source account does not exist.\n"); return;
+    }
+
+    printf("Enter Destination Account (1 - %d): ", MAX_ACCOUNTS);
+    if (scanf("%u", &destAcct) != 1 || destAcct < 1 || destAcct > MAX_ACCOUNTS || destAcct == srcAcct) {
+        fprintf(stderr, "Invalid destination account.\n"); clearInputBuffer(); return;
+    }
+    fseek(fPtr, (destAcct - 1) * sizeof(ClientData), SEEK_SET);
+    fread(&destClient, sizeof(ClientData), 1, fPtr);
+    if (destClient.acctNum == 0) {
+        fprintf(stderr, "Destination account does not exist.\n"); return;
+    }
+
+    printf("Enter Amount to Transfer: ");
+    if (scanf("%lf", &amount) != 1 || amount <= 0) {
+        fprintf(stderr, "Invalid amount.\n"); clearInputBuffer(); return;
+    }
+
+    if (srcClient.balance - amount < 0) {
+        fprintf(stderr, "Transfer declined! Insufficient balance in source account.\n"); return;
+    }
+
+    // Deduct from source
+    srcClient.balance -= amount;
+    fseek(fPtr, (srcAcct - 1) * sizeof(ClientData), SEEK_SET);
+    fwrite(&srcClient, sizeof(ClientData), 1, fPtr);
+
+    // Add to destination
+    destClient.balance += amount;
+    fseek(fPtr, (destAcct - 1) * sizeof(ClientData), SEEK_SET);
+    fwrite(&destClient, sizeof(ClientData), 1, fPtr);
+
+    printf("Successfully transferred %.2f from Acct %u to Acct %u\n", amount, srcAcct, destAcct);
+    logTransaction("Transfer Out", srcAcct, -amount);
+    logTransaction("Transfer In", destAcct, amount);
 }
