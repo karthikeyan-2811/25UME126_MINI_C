@@ -23,6 +23,9 @@ typedef enum {
 } MenuOption;
 
 // Typedef struct for cleaner references
+// VARIABLES EXPLANATION: A struct is a custom composite variable type. It groups 
+// multiple primitive variables (like unsigned int, double, char array) together 
+// so they can be handled as a single logical unit representing an account.
 typedef struct {
     unsigned int acctNum;
     char lastName[15];
@@ -36,6 +39,8 @@ typedef struct {
 
 void clearInputBuffer(void) {
     int c;
+    // LOOPS EXPLANATION: This 'while' loop executes repeatedly until it consumes 
+    // a newline character or EOF. It is essential for clearing standard input.
     while ((c = getchar()) != '\n' && c != EOF) {}
 }
 
@@ -81,7 +86,11 @@ void printTableFooter(void) {
     printf("======================================================================================\n\n");
 }
 
+// POINTER EXPLANATION: We pass 'const ClientData *client' as a pointer instead of by value.
+// This means we only pass an 8-byte memory address rather than cloning all 60+ bytes of the struct. 
+// This vastly improves processing speed and memory usage.
 void displayRecord(const ClientData *client) {
+    // Structure access via pointers uses the -> operator instead of the . operator
     printf("| %-6u | %-15s | %-15s | %-13s | %-9s | %10.2f |\n", 
            client->acctNum, client->lastName, client->firstName, 
            client->mobileNumber, client->accountType, client->balance);
@@ -129,8 +138,13 @@ int main(int argc, char *argv[])
     clearScreen();
     printf("--- Welcome to the Advanced Banking System ---\n");
 
+    // LOOPS EXPLANATION: This while loop acts as the primary program loop. 
+    // It keeps displaying the menu until the user specifically chooses MENU_EXIT.
     while ((choice = enterChoice()) != MENU_EXIT) {
         clearScreen();
+        // SWITCH-CASE EXPLANATION: A switch statement checks the integer 'choice' 
+        // against multiple cases. It provides much cleaner syntax and better 
+        // performance than a long chain of if-else statements for menus.
         switch (choice) {
             case MENU_TEXT_FILE: textFile(cfPtr); break;
             case MENU_UPDATE: updateRecord(cfPtr); break;
@@ -232,6 +246,8 @@ void updateRecord(FILE *fPtr) {
         return;
     }
     
+    // CONDITIONAL EXPLANATION: The if-else block directs program flow based on boolean logic. 
+    // Here it serves as the Negative Balance Restriction safeguard.
     if (client.balance + transaction < 0) {
         fprintf(stderr, "Transaction declined! Insufficient balance.\n");
     } else {
