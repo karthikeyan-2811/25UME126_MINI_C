@@ -8,12 +8,16 @@
 #define MAX_ACCOUNTS 100
 
 // helper to clear input buffer
+// LOOPS EXPLANATION: This 'while' loop repeatedly executes getchar() until it 
+// hits a newline or End of File. It is used to consume invalid characters.
 void clearInputBuffer(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {}
 }
 
 // clientData structure definition
+// VARIABLES EXPLANATION: A struct is a composite variable that groups multiple 
+// different variables (like unsigned int, char array, double) into one logical unit.
 struct clientData
 {
     unsigned int acctNum; // account number
@@ -61,8 +65,13 @@ int main(int argc, char *argv[])
     }
 
     // enable user to specify action
+    // LOOPS EXPLANATION: This while loop acts as the main program loop. It keeps
+    // calling enterChoice() until the user returns 8.
     while ((choice = enterChoice()) != 8)
     {
+        // SWITCH-CASE EXPLANATION: The switch statement provides a clean way to 
+        // branch execution based on the integer value of 'choice'. It is much more
+        // readable than a long chain of if-else statements.
         switch (choice)
         {
         case 1: textFile(cfPtr); break;
@@ -108,16 +117,21 @@ void textFile(FILE *readPtr)
 }
 
 // Display a single record
+// POINTER EXPLANATION: Passing a 'const struct clientData *' pointer is highly efficient. 
+// Instead of copying all 50+ bytes of the struct onto the stack, we just pass an 8-byte 
+// memory address. The 'const' keyword ensures the display function cannot accidentally modify it.
 void displayRecord(const struct clientData *client) {
     printf("%-6u%-16s%-11s%-16s%-11s%10.2f\n", client->acctNum, client->lastName, client->firstName, client->mobileNumber, client->accountType, client->balance);
 }
 
 // Process a transaction using pointers, with negative balance restriction
+// CONDITIONAL EXPLANATION: The 'if/else' block here checks a condition before modifying 
+// data, acting as a crucial banking safeguard (Negative Balance Restriction).
 void processTransaction(struct clientData *client, double amount) {
     if (client->balance + amount < 0) {
         printf("Transaction declined! Insufficient balance. Current Balance: %.2f\n", client->balance);
     } else {
-        client->balance += amount;
+        client->balance += amount; // Pointer updates balance directly in memory
         printf("Transaction successful. New balance: %.2f\n", client->balance);
     }
 }
