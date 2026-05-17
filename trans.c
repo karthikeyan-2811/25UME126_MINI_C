@@ -3,6 +3,15 @@
 // be placed in the file, and deletes data previously in the file.
 #include <stdio.h>
 #include <stdlib.h>
+
+#define MAX_ACCOUNTS 100
+
+// helper to clear input buffer
+void clearInputBuffer(void) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) {}
+}
+
 // clientData structure definition
 struct clientData
 {
@@ -31,7 +40,7 @@ int main(int argc, char *argv[])
         // attempt to create file if it doesn't exist
         if ((cfPtr = fopen("credit.dat", "wb+")) != NULL) {
             struct clientData blankClient = {0, "", "", 0.0};
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < MAX_ACCOUNTS; i++) {
                 fwrite(&blankClient, sizeof(struct clientData), 1, cfPtr);
             }
             rewind(cfPtr);
@@ -117,11 +126,15 @@ void updateRecord(FILE *fPtr)
     struct clientData client = {0, "", "", 0.0};
 
     // obtain number of account to update
-    printf("%s", "Enter account to update ( 1 - 100 ): ");
-    scanf("%u", &account);
+    printf("Enter account to update ( 1 - %d ): ", MAX_ACCOUNTS);
+    if (scanf("%u", &account) != 1) {
+        printf("Invalid input. Please enter a number.\n");
+        clearInputBuffer();
+        return;
+    }
 
-    if (account < 1 || account > 100) {
-        printf("Invalid account number. It must be between 1 and 100.\n");
+    if (account < 1 || account > MAX_ACCOUNTS) {
+        printf("Invalid account number. It must be between 1 and %d.\n", MAX_ACCOUNTS);
         return;
     }
 
@@ -161,11 +174,15 @@ void deleteRecord(FILE *fPtr)
     unsigned int accountNum;                        // account number
 
     // obtain number of account to delete
-    printf("%s", "Enter account number to delete ( 1 - 100 ): ");
-    scanf("%u", &accountNum);
+    printf("Enter account number to delete ( 1 - %d ): ", MAX_ACCOUNTS);
+    if (scanf("%u", &accountNum) != 1) {
+        printf("Invalid input. Please enter a number.\n");
+        clearInputBuffer();
+        return;
+    }
 
-    if (accountNum < 1 || accountNum > 100) {
-        printf("Invalid account number. It must be between 1 and 100.\n");
+    if (accountNum < 1 || accountNum > MAX_ACCOUNTS) {
+        printf("Invalid account number. It must be between 1 and %d.\n", MAX_ACCOUNTS);
         return;
     }
 
@@ -181,7 +198,7 @@ void deleteRecord(FILE *fPtr)
     else
     { // delete record
         // move file pointer to correct record in file
-        fseek(fPtr, (accountNum - 1) * sizeof(struct clientData), SEEK_SET);
+        fseek(fPtr, - (long) sizeof(struct clientData), SEEK_CUR);
         // replace existing record with blank record
         fwrite(&blankClient, sizeof(struct clientData), 1, fPtr);
     } // end else
@@ -195,11 +212,15 @@ void newRecord(FILE *fPtr)
     unsigned int accountNum; // account number
 
     // obtain number of account to create
-    printf("%s", "Enter new account number ( 1 - 100 ): ");
-    scanf("%u", &accountNum);
+    printf("Enter new account number ( 1 - %d ): ", MAX_ACCOUNTS);
+    if (scanf("%u", &accountNum) != 1) {
+        printf("Invalid input. Please enter a number.\n");
+        clearInputBuffer();
+        return;
+    }
 
-    if (accountNum < 1 || accountNum > 100) {
-        printf("Invalid account number. It must be between 1 and 100.\n");
+    if (accountNum < 1 || accountNum > MAX_ACCOUNTS) {
+        printf("Invalid account number. It must be between 1 and %d.\n", MAX_ACCOUNTS);
         return;
     }
 
@@ -220,7 +241,7 @@ void newRecord(FILE *fPtr)
 
         client.acctNum = accountNum;
         // move file pointer to correct record in file
-        fseek(fPtr, (client.acctNum - 1) * sizeof(struct clientData), SEEK_SET);
+        fseek(fPtr, - (long) sizeof(struct clientData), SEEK_CUR);
         // insert record in file
         fwrite(&client, sizeof(struct clientData), 1, fPtr);
     } // end else
@@ -240,7 +261,10 @@ unsigned int enterChoice(void)
                  "5 - list all accounts\n"
                  "6 - end program\n? ");
 
-    scanf("%u", &menuChoice); // receive choice from user
+    if (scanf("%u", &menuChoice) != 1) {
+        clearInputBuffer();
+        return 0; // return invalid choice
+    }
     return menuChoice;
 } // end function enterChoice
 
